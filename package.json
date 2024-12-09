@@ -1,0 +1,23 @@
+{
+  "name": "paypal-handler",
+  "version": "1.0.0",
+  "description": "Paypal handler",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "paypal-rest-sdk": "^1.8.1",
+    "stripe": "^8.222.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:metadevzone/paypal-handler-node.git"
+  },
+  "author": "MetaDevZone",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com:metadevzone/paypal-handler-node.gitissues"
+  },
+  "homepage": "https://github.com:metadevzone/paypal-handler-node.git"
+}
