@@ -20,5 +20,12 @@
   "bugs": {
     "url": "https://github.com:metadevzone/paypal-handler-node.gitissues"
   },
+  "keywords": [
+    "paypal",
+    "handler",
+    "node-paypal",
+    "paypal-node-sdk",
+    "paypal-sdk"
+  ],
   "homepage": "https://github.com:metadevzone/paypal-handler-node.git"
 }
