@@ -1,6 +1,3 @@
-Here's a revised documentation for the `paypal-handler` file, tailored to describe its role and functions clearly. This assumes the file is implementing actual PayPal API operations using validated data:
-
----
 
 # PayPal Handler Documentation
 
@@ -17,11 +14,17 @@ Here's a revised documentation for the `paypal-handler` file, tailored to descri
 - **Execute Payments**: Execute and finalize PayPal transactions.
 - **Billing Agreements**: Execute billing agreements seamlessly.
 
+
 ---
+### installation 
+
+---
+npm i paypal-handler
 
 ## Prerequisites
 
-Before using the functions in `PayPal Handler`, ensure you have:
+
+Before using the `PayPal Handler`, ensure you have:
 
 1. A PayPal Developer account.
 2. PayPal API credentials (`client_id` and `client_secret`).
@@ -42,13 +45,25 @@ Configures PayPal SDK with `client_id`, `client_secret`, and `mode` (sandbox/liv
 
 #### Example:
 ```javascript
-const config = {
-  mode: "sandbox",
-  client_id: "your-client-id",
-  client_secret: "your-client-secret",
-};
+const initializePaypal = async (mode, client_id, client_secret) => {
+  try {
+    let configuration = {
+      mode: mode,
+      client_id: client_id,
+      client_secret: client_secret,
+    };
 
-configurePaypal(config);
+    const { error, message, response } = await configurePaypal(configuration);
+    if (error) {
+      console.log(error);
+      throw new Error(error);
+    }
+
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
 ```
 
 ---
@@ -68,13 +83,38 @@ Creates a one-time payment transaction.
 
 #### Example:
 ```javascript
-const payload = {
-  amount: 100.0,
-  currency: "USD",
-  return_url: "https://example.com/success",
-};
+const createOneTimePayment = async (
+  paypal,
+  amount,
+  currency,
+  discount_type,
+  discount,
+  tax,
+  return_url
+) => {
+  try {
+    let onetime_payment_obj = {
+      amount: amount,
+      currency: currency,
+      discount_type: discount_type,
+      discount: discount,
+      tax: tax,
+      return_url: return_url,
+    };
 
-createOneTimePayment(payload);
+    const { error, message, response } = await createPaymentPlanOneTime(
+      onetime_payment_obj,
+      paypal
+    );
+    if (error) {
+      console.log(error);
+      throw new Error(error);
+    }
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
 ```
 
 ---
@@ -91,8 +131,28 @@ Executes a PayPal payment after it has been approved by the user.
 ```javascript
 const paymentId = "PAY-12345";
 const payerId = "PAYER-67890";
+const executePaymentFunction = async (paypal, paymentId, payerId) => {
+  try {
+    let execute_payment_obj = {
+      payment_id: paymentId,
+      payer_id:payerId ,
+    };
 
-executePayment(paymentId, payerId);
+    const { error, message, response } = await executePayment(
+      execute_payment_obj,
+      paypal
+    );
+
+    if (error) {
+      console.log(error);
+      throw new Error(error);
+    }
+
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
 ```
 
 ---
@@ -108,16 +168,46 @@ Creates a recurring payment plan (e.g., subscriptions).
 
 #### Example:
 ```javascript
-const payload = {
-  amount: 50.0,
-  currency: "USD",
-  frequency: "MONTHLY",
-  plan_name: "Basic Plan",
-  trial_period_days: 7,
-  return_url: "https://example.com/recurring/success",
-};
+const createRecurringPayment = async (
+  paypal,
+  amount,
+  currency,
+  discount_type,
+  discount,
+  tax,
+  return_url,
+  frequency,
+  interval_count
+) => {
+  try {
+    let recurring_payment_obj = {
+      amount: amount,
+      currency: currency,
+      frequency: frequency,
+      plan_name: "Recurring Payment Plan",
+      trial_period_days: 0,
+      return_url: return_url,
+      discount_type: discount_type,
+      discount: discount,
+      tax: tax,
+      custom_days: interval_count,
+    };
 
-createRecurringPaymentPlan(payload);
+    const { error, message, response } = await createPaymentPlanRecurring(
+      recurring_payment_obj,
+      paypal
+    );
+
+    if (error) {
+      console.log(error);
+      throw new Error(error);
+    }
+
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
 ```
 
 ---
@@ -132,17 +222,46 @@ Creates a recurring payment plan with a fixed number of cycles.
 
 #### Example:
 ```javascript
-const payload = {
-  amount: 20.0,
-  currency: "USD",
-  frequency: "YEARLY",
-  plan_name: "Yearly Plan",
-  trial_period_days: 14,
-  cycles: 12,
-  return_url: "https://example.com/fixed/success",
-};
+const createRecurringPayment = async (
+  paypal,
+  amount,
+  currency,
+  discount_type,
+  discount,
+  tax,
+  return_url,
+  frequency,
+  interval_count
+) => {
+  try {
+    let recurring_payment_obj = {
+      amount: amount,
+      currency: currency,
+      frequency: frequency,
+      plan_name: "Recurring Payment Plan",
+      trial_period_days: 0,
+      return_url: return_url,
+      discount_type: discount_type,
+      discount: discount,
+      tax: tax,
+      custom_days: interval_count,
+    };
 
-createFixedRecurringPayment(payload);
+    const { error, message, response } = await createPaymentPlanRecurring(
+      recurring_payment_obj,
+      paypal
+    );
+
+    if (error) {
+      console.log(error);
+      throw new Error(error);
+    }
+
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
 ```
 
 ---
@@ -157,17 +276,49 @@ Creates a payment plan based on installments.
 
 #### Example:
 ```javascript
-const payload = {
-  amount: 1000.0,
-  initial_amount: 200.0,
-  currency: "USD",
-  frequency: "MONTHLY",
-  plan_name: "Installment Plan",
-  cycles: 5,
-  return_url: "https://example.com/installments/success",
-};
+const createInstallmentsPayment = async (
+  paypal,
+  amount,
+  initial_amount,
+  currency,
+  discount_type,
+  discount,
+  tax,
+  return_url,
+  frequency,
+  interval_count
+) => {
+  try {
+    let installments_payment_obj = {
+      amount: amount,
+      initial_amount: initial_amount,
+      currency: currency,
+      frequency: frequency,
+      plan_name: "Installments Payment Plan",
+      trial_period_days: 0,
+      cycles: 1,
+      return_url: return_url,
+      discount_type: discount_type,
+      discount: discount,
+      tax: tax,
+      custom_days: interval_count,
+    };
 
-createInstallmentPayment(payload);
+    const { error, message, response } = await createPaymentInstallments(
+      installments_payment_obj,
+      paypal
+    );
+
+    if (error) {
+      console.log(error);
+      throw new Error(error);
+    }
+
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
 ```
 
 ---
@@ -182,8 +333,27 @@ Executes a billing agreement for recurring payments.
 #### Example:
 ```javascript
 const token = "EC-12345";
+const billingAgreementExecuteFunction = async (paypal, token) => {
+  try {
+    let billing_agreement_execute_obj = {
+      token: token,
+    };
 
-executeBillingAgreement(token);
+    const { error, message, response } = await billingAgreementExecute(
+      billing_agreement_execute_obj,
+      paypal
+    );
+
+    if (error) {
+      console.log(error);
+      throw new Error(error);
+    }
+
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
 ```
 
 ---
@@ -210,14 +380,42 @@ All functions return a consistent response format to simplify integration:
 
 ### Example:
 ```javascript
-const result = createOneTimePayment(payload);
+const createOneTimePayment = async (
+  paypal,
+  amount,
+  currency,
+  discount_type,
+  discount,
+  tax,
+  return_url
+) => {
+  try {
+    let onetime_payment_obj = {
+      amount: amount,
+      currency: currency,
+      discount_type: discount_type,
+      discount: discount,
+      tax: tax,
+      return_url: return_url,
+    };
 
-if (result.success) {
-  console.log("Payment Created:", result.data);
-} else {
-  console.error("Payment Error:", result.error);
-}
+    const { error, message, response } = await createPaymentPlanOneTime(
+      onetime_payment_obj,
+      paypal
+    );
+    if (error) {
+      console.log(error);
+      throw new Error(error);
+    }
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
 ```
+
+## Examples 
+  Please Refer to Examples Folder for better understanding 
 
 
 
@@ -233,5 +431,7 @@ Contributions are welcome! Please feel free to open issues, submit PRs, or sugge
 
 ## Author
 
-[MetaDevZone](https://yourwebsite.com)
+[MetaDevZone](https://metadevzone.com)
+
+
 

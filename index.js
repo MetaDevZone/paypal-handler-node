@@ -7,10 +7,7 @@ const {
   createPaymentInstallments,
   executePayment,
   billingAgreementExecute,
-} = require("./src/paypal");
-
-
-
+} = require("./src/paypal-handler");
 module.exports = {
   configurePaypal,
   createPaymentPlanOneTime,

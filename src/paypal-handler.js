@@ -10,8 +10,18 @@ const {
   validateBillingAgreementExecute,
 } = require("../validation/paypal");
 
-const configurePaypal = async (body, paypal) => {
-
+/**
+ *
+ * @param {
+ * mode: "sandbox" | "live",
+ * client_id: string,
+ * client_secret: string
+ * } body
+ *
+ * @description This function is used to configure the paypal sdk with the given credentials
+ * @returns
+ */
+const configurePaypal = async (body) => {
   let { error, message } = validateConfigurePaypal(body);
   if (error) {
     return { error: true, message: message, response: null };
@@ -28,6 +38,21 @@ const configurePaypal = async (body, paypal) => {
   }
 };
 
+/**
+  @param {
+    amount: number,
+    currency: string,
+    discount_type: string,
+    discount: number,
+    tax: number,
+    return_url: string
+  } body
+
+  @description This function is used to create a one-time payment link
+  @returns  { error: boolean, message: string, response: 
+    { payment: object, link: string } | null }
+ */
+
 const createPaymentPlanOneTime = (body, paypal) => {
   //validate the body with joi
   let { error, message } = validateOneTimePaymentPlan(body);
@@ -36,13 +61,11 @@ const createPaymentPlanOneTime = (body, paypal) => {
   }
   body.currency = body.currency.toUpperCase();
   if (body.discount > 0) {
-    if (body.discount.type == "percentage") {
-      console.log("enter into discount percentage case");
+    if (body.discount_type == "percentage") {
       let discount_amount = (body.discount / 100) * body.amount;
       body.amount = (body.amount - discount_amount).toFixed(1);
       body.amount = parseFloat(body.amount);
     } else {
-      console.log("enter into fixed percentage case");
       body.amount = (body.amount - body.discount).toFixed(1);
       body.amount = parseFloat(body.amount);
     }
@@ -83,14 +106,13 @@ const createPaymentPlanOneTime = (body, paypal) => {
               shipping: "0.00", // Include shipping if applicable
             },
           },
-          description: "This is the payment description.",
+          description: body.description,
         },
       ],
     };
 
     paypal.payment.create(create_payment_json, (error, payment) => {
       if (error) {
-        console.error("Error in PayPal payment creation:", error);
         resolve({
           error: true,
           message: error.response
@@ -99,7 +121,6 @@ const createPaymentPlanOneTime = (body, paypal) => {
           response: null,
         });
       } else {
-        console.log("Payment created successfully:", payment);
         let link = "";
         for (let i = 0; i < payment.links.length; i++) {
           if (payment.links[i].rel == "approval_url") {
@@ -112,6 +133,26 @@ const createPaymentPlanOneTime = (body, paypal) => {
   });
 };
 
+/**
+ * @param {
+ * amount: number,
+ * currency: string,
+ * frequency: string,
+ * plan_name: string,
+ * trial_period_days: number,
+ * return_url: string,
+ * discount_type: string,
+ * discount: number,
+ * tax: number,
+ * custom_days: number
+ * } body
+ *
+ * @description This function is used to create a recurring payment plan
+ * @returns { error: boolean, message: string, response:
+ * { billingAgreement: object, link: string } | null }
+ *
+ */
+
 const createPaymentPlanRecurring = async (body, paypal) => {
   //validate the body with joi
   let { error, message } = validateRecurringPaymentPlan(body);
@@ -121,13 +162,11 @@ const createPaymentPlanRecurring = async (body, paypal) => {
   let link = "";
   body.currency = body.currency.toUpperCase();
   if (body.discount > 0) {
-    if (body.discount.type == "percentage") {
-      console.log("enter into discount percentage case");
+    if (body.discount_type == "percentage") {
       let discount_amount = (body.discount / 100) * body.amount;
       body.amount = (body.amount - discount_amount).toFixed(1);
       body.amount = parseFloat(body.amount);
     } else {
-      console.log("enter into fixed percentage case");
       body.amount = (body.amount - body.discount).toFixed(1);
       body.amount = parseFloat(body.amount);
     }
@@ -144,10 +183,6 @@ const createPaymentPlanRecurring = async (body, paypal) => {
   }
   return new Promise(async (resolve) => {
     try {
-      console.log(
-        new Date(Date.now() + 60000).toISOString(),
-        "date in recurring case"
-      );
       let UppercaseFrequency = body.frequency.toUpperCase();
 
       let payment_def = [
@@ -282,6 +317,26 @@ const createPaymentPlanRecurring = async (body, paypal) => {
   });
 };
 
+/**
+ * @param {
+ * amount: number,
+ * currency: string,
+ * frequency: string,
+ * plan_name: string,
+ * trial_period_days: number,
+ * cycles: number,
+ * return_url: string,
+ * discount_type: string,
+ * discount: number,
+ * tax: number,
+ * custom_days: number
+ * } body
+ *
+ * @description This function is used to create a fixed recurring payment plan
+ * @returns { error: boolean, message: string, response:
+ * { billingAgreement: object, link: string } | null }
+ * */
+
 const createPaymentFixedRecurring = async (body, paypal) => {
   //validate the body with joi
   let { error, message } = validateFixedRecurringPayment(body);
@@ -291,13 +346,11 @@ const createPaymentFixedRecurring = async (body, paypal) => {
   let link = "";
   body.currency = body.currency.toUpperCase();
   if (body.discount > 0) {
-    if (body.discount.type == "percentage") {
-      console.log("enter into discount percentage case");
+    if (body.discount_type == "percentage") {
       let discount_amount = (body.discount / 100) * body.amount;
       body.amount = (body.amount - discount_amount).toFixed(1);
       body.amount = parseFloat(body.amount);
     } else {
-      console.log("enter into fixed percentage case");
       body.amount = (body.amount - body.discount).toFixed(1);
       body.amount = parseFloat(body.amount);
     }
@@ -318,10 +371,6 @@ const createPaymentFixedRecurring = async (body, paypal) => {
 
   return new Promise(async (resolve) => {
     try {
-      console.log(
-        new Date(Date.now() + 60000).toISOString(),
-        "date in recurring fixed case"
-      );
       let UppercaseFrequency = body.frequency.toUpperCase();
       let payment_def = [
         {
@@ -467,34 +516,17 @@ const createPaymentInstallments = async (body, paypal) => {
       discountPercentage = (amount / body.amount) * 100;
     }
 
-    console.log(`Discount Percentage: ${discountPercentage.toFixed(2)}%`);
-
     // Apply discount based on calculated percentage
     let discountedInitial =
       body.initial_amount * (1 - discountPercentage / 100);
     let discountedInstallmentTotal =
       (body.amount - body.initial_amount) * (1 - discountPercentage / 100);
 
-    console.log(discountedInitial.toFixed(2), "Discounted initial amount");
-    console.log(
-      discountedInstallmentTotal.toFixed(2),
-      "Discounted installment total"
-    );
-
-    // Adjust interval count for no trial
-    // if (body.trial_period_days < 1) {
-    //   body.interval_count -= 1;
-    // }
-
     body.amount = discountedInstallmentTotal / body.interval_count;
-    console.log(body.amount.toFixed(2), "Installment amount per interval");
+
     body.initial_amount = discountedInitial.toFixed(2);
-    // if (body.trial_period_days < 1) {
-    //   body.initial_amount = parseFloat(body.initial_amount, 10) - body.amount;
-    // }
   }
-  console.log(body.initial_amount, "body.initial_amount before tax");
-  console.log(body.amount, "body.amount before tax");
+
   // calculating discount
   let tax = 0,
     payment;
