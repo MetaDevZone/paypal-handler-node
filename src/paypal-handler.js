@@ -608,7 +608,10 @@ const createPaymentInstallments = async (body, paypal) => {
       const payment = await new Promise((resolve, reject) => {
         paypal.billingPlan.create(create_payment_json, (error, payment) => {
           if (error) {
-            console.log(error, "error in creating payment plan..............");
+            console.log(
+              JSON.stringify(error, null, 2),
+              "error in creating payment plan.............."
+            );
             reject(
               error.response
                 ? error.response.details
@@ -670,7 +673,7 @@ const createPaymentInstallments = async (body, paypal) => {
           (error, billingAgreement) => {
             if (error) {
               console.log(
-                error,
+                JSON.stringify(error, null, 2),
                 "error in creating billing agreement.............."
               );
               reject(
