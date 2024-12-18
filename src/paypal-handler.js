@@ -9,6 +9,7 @@ const {
   validateExecutePayment,
   validateBillingAgreementExecute,
 } = require("../validation/paypal");
+const { GET_DISCOUNTED_AMOUNTS } = require("./helpers/general_helpers");
 
 /**
  *
@@ -502,36 +503,27 @@ const createPaymentFixedRecurring = async (body, paypal) => {
 };
 /********************************************* Create Installments Payment Plan ******************************/
 const createPaymentInstallments = async (body, paypal) => {
-  //validate the body with joi
   let { error, message } = validateInstallmentsPayment(body);
   if (error) {
     console.log(error.details[0].message.replace(/\"/g, ""));
     return { error: true, message: message, response: null };
   }
-  let link = "";
   body.currency = body.currency.toUpperCase();
+  // Apply Discount ...
   if (body.discount > 0) {
-    const amount = body.discount;
-    let discountPercentage = 0;
-
-    if (body.discount_type === "percentage") {
-      discountPercentage = amount;
-    } else {
-      discountPercentage = (amount / body.amount) * 100;
-    }
-    // Apply discount based on calculated percentage
-    let discountedInitial =
-      body.initial_amount * (1 - discountPercentage / 100);
-    let discountedInstallmentTotal =
-      (body.amount - body.initial_amount) * (1 - discountPercentage / 100);
-
-    body.amount = discountedInstallmentTotal / body.custom_days;
-    body.initial_amount = discountedInitial.toFixed(2);
+    const { discounted_initial_amount, discounted_installment_amount } =
+      GET_DISCOUNTED_AMOUNTS(
+        body.discount,
+        body.discount_type,
+        body.initial_amount,
+        body.amount
+      );
+    body.initial_amount = discounted_initial_amount;
+    body.amount = discounted_installment_amount;
   }
 
-  // calculating discount
-  let tax = 0,
-    payment;
+  // Apply Tax ...
+  let tax = 0;
   if (body.tax > 0) {
     tax = body.amount * (body.tax / 100);
     body.amount = tax + body.amount;
@@ -540,14 +532,17 @@ const createPaymentInstallments = async (body, paypal) => {
     body.initial_amount = tax + body.initial_amount;
     body.initial_amount = body.initial_amount.toFixed(2);
   }
+
   if (body.cycles > 0) {
     body.amount = body.amount / body.cycles;
+    body.amount = body.amount.toFixed(2);
   }
   let custom_days = 1;
-  if (body.frequency == "custom") {
+  if (body.frequency === "custom") {
     body.frequency = "DAY";
     custom_days = body.custom_days;
   }
+
   return new Promise(async (resolve) => {
     try {
       const UppercaseFrequency = body.frequency.toUpperCase();
@@ -581,7 +576,7 @@ const createPaymentInstallments = async (body, paypal) => {
         cycles: body.cycles.toString(), // Number of regular payments
         amount: {
           currency: body.currency,
-          value: body.amount.toFixed(2), // Regular payment amount
+          value: body.amount, // Regular payment amount
         },
       });
       const create_payment_json = {
@@ -645,8 +640,8 @@ const createPaymentInstallments = async (body, paypal) => {
       });
       // Calculate the start date for recurring payments (1 day after the initial payment)
       const now = new Date();
-      // const oneDayInMillis = 24 * 60 * 60 * 1000;
-      const startDate = new Date(now.getTime()).toISOString();
+      const oneDayInMillis = 24 * 60 * 60 * 1000;
+      const startDate = new Date(now.getTime() + oneDayInMillis).toISOString();
 
       // Create the billing agreement
       const billing_agreement_attributes = {
@@ -669,10 +664,6 @@ const createPaymentInstallments = async (body, paypal) => {
           billing_agreement_attributes,
           (error, billingAgreement) => {
             if (error) {
-              console.log(
-                error,
-                "error in creating billing agreement.............."
-              );
               reject(
                 error.response
                   ? error.response.details
@@ -684,6 +675,8 @@ const createPaymentInstallments = async (body, paypal) => {
           }
         );
       });
+
+      let link = "";
       for (let i = 0; i < billingAgreement.links.length; i++) {
         if (billingAgreement.links[i].rel == "approval_url") {
           link = billingAgreement.links[i];
@@ -699,7 +692,7 @@ const createPaymentInstallments = async (body, paypal) => {
     }
   });
 };
-
+/**************************************************************************************************************/
 // Execute the payment
 let executePayment = async (body, paypal) => {
   //validate the body with joi
