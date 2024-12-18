@@ -691,7 +691,7 @@ const createPaymentInstallments = async (body, paypal) => {
       }
       resolve({
         error: false,
-        message: "",
+        message: "Sucessfully created billing agreement",
         response: { billingAgreement, link },
       }); // Return the billing agreement
     } catch (error) {
