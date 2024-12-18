@@ -597,8 +597,8 @@ const createPaymentInstallments = async (body, paypal) => {
             currency: body.currency,
             value: body.initial_amount, // Charge the setup fee immediately
           },
-          cancel_url: body.return_url,
-          return_url: body.cancel_url ? body.cancel_url : body.return_url,
+          cancel_url: body.cancel_url ? body.cancel_url : body.return_url,
+          return_url: body.return_url,
           max_fail_attempts: "1",
           auto_bill_amount: "YES",
           initial_fail_amount_action: "CONTINUE",
@@ -691,7 +691,7 @@ const createPaymentInstallments = async (body, paypal) => {
       }
       resolve({
         error: false,
-        message: "",
+        message: "Sucessfully created billing agreement",
         response: { billingAgreement, link },
       }); // Return the billing agreement
     } catch (error) {
