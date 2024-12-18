@@ -84,7 +84,7 @@ const createPaymentPlanOneTime = (body, paypal) => {
       },
       redirect_urls: {
         return_url: body.return_url,
-        cancel_url: body.return_url,
+        cancel_url: body.cancel_url,
       },
       transactions: [
         {
@@ -228,7 +228,7 @@ const createPaymentPlanRecurring = async (body, paypal) => {
             currency: body.currency,
             value: "0.00",
           },
-          cancel_url: body.return_url,
+          cancel_url: body.cancel_url,
           return_url: body.return_url,
           max_fail_attempts: "1",
           auto_bill_amount: "YES",
@@ -603,7 +603,10 @@ const createPaymentInstallments = async (body, paypal) => {
       const payment = await new Promise((resolve, reject) => {
         paypal.billingPlan.create(create_payment_json, (error, payment) => {
           if (error) {
-            console.log(error, "error in creating payment plan..............");
+            console.log(
+              JSON.stringify(error, null, 2),
+              "error in creating payment plan.............."
+            );
             reject(
               error.response
                 ? error.response.details
