@@ -2,7 +2,7 @@ const Joi = require("joi");
 
 const validateConfigurePaypal = (body) => {
   const schema = Joi.object({
-    mode: Joi.string().required(),
+    mode: Joi.string().required().valid(["sandbox", "live"]),
     client_id: Joi.string().required(),
     client_secret: Joi.string().required(),
   });
@@ -106,6 +106,7 @@ const validateInstallmentsPayment = (body) => {
     trial_period_days: Joi.number().required(),
     cycles: Joi.number().required(),
     return_url: Joi.string().required(),
+    cancel_url: Joi.string().allow("", null),
     discount_type: Joi.string().allow("percentage", "fixed", "", null),
     discount: Joi.number().allow("", null),
     tax: Joi.number().allow("", null),
