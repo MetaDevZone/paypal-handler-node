@@ -1,6 +1,6 @@
 {
   "name": "paypal-handler",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Paypal handler",
   "main": "index.js",
   "private": false,
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/metadevzone/paypal-handler-node"
+    "url": "git+https://github.com/metadevzone/paypal-handler-node.git"
   },
   "author": "MetaDevZone",
   "license": "ISC",
