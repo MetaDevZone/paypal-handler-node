@@ -114,6 +114,7 @@ const createPaymentPlanOneTime = (body, paypal) => {
 
     paypal.payment.create(create_payment_json, (error, payment) => {
       if (error) {
+        console.log(error, "error in one-time PayPal payment..............");
         resolve({
           error: true,
           message: error.response
@@ -123,6 +124,7 @@ const createPaymentPlanOneTime = (body, paypal) => {
         });
       } else {
         let link = "";
+        console.log("Create Payment Response", payment);
         for (let i = 0; i < payment.links.length; i++) {
           if (payment.links[i].rel == "approval_url") {
             link = payment.links[i];
@@ -606,6 +608,7 @@ const createPaymentInstallments = async (body, paypal) => {
       const payment = await new Promise((resolve, reject) => {
         paypal.billingPlan.create(create_payment_json, (error, payment) => {
           if (error) {
+            console.log(error, "error in creating payment plan..............");
             reject(
               error.response
                 ? error.response.details
@@ -642,8 +645,8 @@ const createPaymentInstallments = async (body, paypal) => {
       });
       // Calculate the start date for recurring payments (1 day after the initial payment)
       const now = new Date();
-      const oneDayInMillis = 24 * 60 * 60 * 1000;
-      const startDate = new Date(now.getTime() + oneDayInMillis).toISOString();
+      // const oneDayInMillis = 24 * 60 * 60 * 1000;
+      const startDate = new Date(now.getTime()).toISOString();
 
       // Create the billing agreement
       const billing_agreement_attributes = {
@@ -666,6 +669,10 @@ const createPaymentInstallments = async (body, paypal) => {
           billing_agreement_attributes,
           (error, billingAgreement) => {
             if (error) {
+              console.log(
+                error,
+                "error in creating billing agreement.............."
+              );
               reject(
                 error.response
                   ? error.response.details

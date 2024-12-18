@@ -56,7 +56,7 @@ const createOneTimePayment = async (
       paypal
     );
     if (error) {
-      console.log(error);
+      console.log(message);
       throw new Error(error);
     }
     return response;
@@ -243,3 +243,41 @@ const billingAgreementExecuteFunction = async (paypal, token) => {
     return error;
   }
 };
+
+initializePaypal(
+  "sandbox",
+  "Ab7eQJhhXmUGhsQEXgIMy0lh1hu_Cg8cHhk3d35I3lzD-7u67o5AGPD4aDYAUMULsOcPqFazzqMKqKHs",
+  "EMgvpBj6K0dsuBJiD4K6jWHiGtSm-IzWedu2W2Mqkpt4l85U3jfaBylGcCf8m2bIk40TSRb158rgCOwe"
+)
+  .then((response) => {
+    // make one time payment
+    // createOneTimePayment(
+    //   response,
+    //   100,
+    //   "usd",
+    //   "percentage",
+    //   0,
+    //   0,
+    //   "https://www.example.com"
+    // )
+    //   .then((response) => {
+    //     console.log(response.payment.transactions);
+    //   })
+    //   .catch((error) => {
+    //     console.log(error);
+    //   });
+    executePaymentFunction(
+      response,
+      "PAYID-M5P67EQ5T198344DY3965633",
+      "UKGW35S8C674S"
+    )
+      .then((response) => {
+        console.log(response);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  })
+  .catch((error) => {
+    console.log(error);
+  });

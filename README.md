@@ -217,12 +217,11 @@ const createRecurringPayment = async (
 Creates a recurring payment plan with a fixed number of cycles.
 
 #### Parameters:
-- `payload` (object): Validated payload for fixed-cycle recurring payments. Must include:
-  - `amount`, `currency`, `frequency`, `plan_name`, `trial_period_days`, and `cycles`.
+- `payload` (object): Validated payload for fixed-cycle recurring payments.
 
 #### Example:
 ```javascript
-const createRecurringPayment = async (
+const createFixedRecurringPayment = async (
   paypal,
   amount,
   currency,
@@ -238,8 +237,9 @@ const createRecurringPayment = async (
       amount: amount,
       currency: currency,
       frequency: frequency,
-      plan_name: "Recurring Payment Plan",
+      plan_name: "Fixed Recurring Payment Plan",
       trial_period_days: 0,
+      cycles: 1,
       return_url: return_url,
       discount_type: discount_type,
       discount: discount,
@@ -247,7 +247,7 @@ const createRecurringPayment = async (
       custom_days: interval_count,
     };
 
-    const { error, message, response } = await createPaymentPlanRecurring(
+    const { error, message, response } = await createPaymentFixedRecurring(
       recurring_payment_obj,
       paypal
     );
@@ -271,8 +271,7 @@ const createRecurringPayment = async (
 Creates a payment plan based on installments.
 
 #### Parameters:
-- `payload` (object): Validated payload for installment payments. Must include:
-  - `amount`, `initial_amount`, `currency`, `frequency`, `plan_name`, and `cycles`.
+- `payload` (object): Validated payload for installment payments. 
 
 #### Example:
 ```javascript
@@ -378,41 +377,6 @@ All functions return a consistent response format to simplify integration:
   }
   ```
 
-### Example:
-```javascript
-const createOneTimePayment = async (
-  paypal,
-  amount,
-  currency,
-  discount_type,
-  discount,
-  tax,
-  return_url
-) => {
-  try {
-    let onetime_payment_obj = {
-      amount: amount,
-      currency: currency,
-      discount_type: discount_type,
-      discount: discount,
-      tax: tax,
-      return_url: return_url,
-    };
-
-    const { error, message, response } = await createPaymentPlanOneTime(
-      onetime_payment_obj,
-      paypal
-    );
-    if (error) {
-      console.log(error);
-      throw new Error(error);
-    }
-    return response;
-  } catch (error) {
-    return error;
-  }
-};
-```
 
 ## Examples 
   Please Refer to Examples Folder for better understanding 
