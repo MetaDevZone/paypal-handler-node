@@ -648,8 +648,8 @@ const createPaymentInstallments = async (body, paypal) => {
       });
       // Calculate the start date for recurring payments (1 day after the initial payment)
       const now = new Date();
-      // const oneDayInMillis = 24 * 60 * 60 * 1000;
-      const startDate = new Date(now.getTime()).toISOString();
+      const oneDayInMillis = 24 * 60 * 60 * 1000;
+      const startDate = new Date(now.getTime() + oneDayInMillis).toISOString();
 
       // Create the billing agreement
       const billing_agreement_attributes = {
