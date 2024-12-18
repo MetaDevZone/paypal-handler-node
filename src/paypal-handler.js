@@ -83,7 +83,7 @@ const createPaymentPlanOneTime = (body, paypal) => {
       },
       redirect_urls: {
         return_url: body.return_url,
-        cancel_url: body.return_url,
+        cancel_url: body.cancel_url,
       },
       transactions: [
         {
@@ -227,7 +227,7 @@ const createPaymentPlanRecurring = async (body, paypal) => {
             currency: body.currency,
             value: "0.00",
           },
-          cancel_url: body.return_url,
+          cancel_url: body.cancel_url,
           return_url: body.return_url,
           max_fail_attempts: "1",
           auto_bill_amount: "YES",
