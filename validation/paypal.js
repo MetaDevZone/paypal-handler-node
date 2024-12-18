@@ -2,7 +2,7 @@ const Joi = require("joi");
 
 const validateConfigurePaypal = (body) => {
   const schema = Joi.object({
-    mode: Joi.string().required().valid(["sandbox", "live"]),
+    mode: Joi.string().required(),
     client_id: Joi.string().required(),
     client_secret: Joi.string().required(),
   });
