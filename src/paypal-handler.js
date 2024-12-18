@@ -21,6 +21,7 @@ const {
  * @description This function is used to configure the paypal sdk with the given credentials
  * @returns
  */
+/************************************************** Configure PayPal ******************************** */
 const configurePaypal = async (body) => {
   let { error, message } = validateConfigurePaypal(body);
   if (error) {
@@ -37,7 +38,7 @@ const configurePaypal = async (body) => {
     return { error: true, message: error.message, response: null };
   }
 };
-
+/*****************************************************************************************************/
 /**
   @param {
     amount: number,
@@ -52,7 +53,7 @@ const configurePaypal = async (body) => {
   @returns  { error: boolean, message: string, response: 
     { payment: object, link: string } | null }
  */
-
+/************************************************ Create One Time Payment Plan ******************************/
 const createPaymentPlanOneTime = (body, paypal) => {
   //validate the body with joi
   let { error, message } = validateOneTimePaymentPlan(body);
@@ -132,7 +133,7 @@ const createPaymentPlanOneTime = (body, paypal) => {
     });
   });
 };
-
+/***********************************************************************************************************/
 /**
  * @param {
  * amount: number,
@@ -497,11 +498,12 @@ const createPaymentFixedRecurring = async (body, paypal) => {
     }
   });
 };
-
+/********************************************* Create Installments Payment Plan ******************************/
 const createPaymentInstallments = async (body, paypal) => {
   //validate the body with joi
   let { error, message } = validateInstallmentsPayment(body);
   if (error) {
+    console.log(error.details[0].message.replace(/\"/g, ""));
     return { error: true, message: message, response: null };
   }
   let link = "";
@@ -515,15 +517,13 @@ const createPaymentInstallments = async (body, paypal) => {
     } else {
       discountPercentage = (amount / body.amount) * 100;
     }
-
     // Apply discount based on calculated percentage
     let discountedInitial =
       body.initial_amount * (1 - discountPercentage / 100);
     let discountedInstallmentTotal =
       (body.amount - body.initial_amount) * (1 - discountPercentage / 100);
 
-    body.amount = discountedInstallmentTotal / body.interval_count;
-
+    body.amount = discountedInstallmentTotal / body.custom_days;
     body.initial_amount = discountedInitial.toFixed(2);
   }
 
@@ -541,13 +541,11 @@ const createPaymentInstallments = async (body, paypal) => {
   if (body.cycles > 0) {
     body.amount = body.amount / body.cycles;
   }
-
   let custom_days = 1;
   if (body.frequency == "custom") {
     body.frequency = "DAY";
     custom_days = body.custom_days;
   }
-
   return new Promise(async (resolve) => {
     try {
       const UppercaseFrequency = body.frequency.toUpperCase();
@@ -581,10 +579,9 @@ const createPaymentInstallments = async (body, paypal) => {
         cycles: body.cycles.toString(), // Number of regular payments
         amount: {
           currency: body.currency,
-          value: body.amount, // Regular payment amount
+          value: body.amount.toFixed(2), // Regular payment amount
         },
       });
-
       const create_payment_json = {
         name: body.plan_name,
         description:
@@ -599,13 +596,12 @@ const createPaymentInstallments = async (body, paypal) => {
             value: body.initial_amount, // Charge the setup fee immediately
           },
           cancel_url: body.return_url,
-          return_url: body.return_url,
+          return_url: body.cancel_url ? body.cancel_url : body.return_url,
           max_fail_attempts: "1",
           auto_bill_amount: "YES",
           initial_fail_amount_action: "CONTINUE",
         },
       };
-
       // Create the payment plan
       const payment = await new Promise((resolve, reject) => {
         paypal.billingPlan.create(create_payment_json, (error, payment) => {
@@ -620,7 +616,6 @@ const createPaymentInstallments = async (body, paypal) => {
           }
         });
       });
-
       // Activate the payment plan
       const billing_plan_update_attributes = [
         {
@@ -645,7 +640,6 @@ const createPaymentInstallments = async (body, paypal) => {
           }
         );
       });
-
       // Calculate the start date for recurring payments (1 day after the initial payment)
       const now = new Date();
       const oneDayInMillis = 24 * 60 * 60 * 1000;
