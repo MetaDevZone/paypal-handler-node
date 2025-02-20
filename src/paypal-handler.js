@@ -505,7 +505,7 @@ const createPaymentFixedRecurring = async (body, paypal) => {
 const createPaymentInstallments = async (body, paypal) => {
   let { error, message } = validateInstallmentsPayment(body);
   if (error) {
-    console.log(error.details[0].message.replace(/\"/g, ""));
+    console.log(error);
     return { error: true, message: message, response: null };
   }
   body.currency = body.currency.toUpperCase();
