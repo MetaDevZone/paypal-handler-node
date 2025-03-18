@@ -784,98 +784,94 @@ let billingAgreementExecute = async (body, paypal) => {
 /**************************************************************************************************************/
 // Cancel the subscription
 
-const cancelSubscriptionAndRefund = async (body, paypal) => {
-  let { subscriptionId, refundAmount, currency } = body;
-  return new Promise(async (resolve) => {
-    try {
-      // Step 1: Cancel the Subscription
-      await new Promise((resolve, reject) => {
-        paypal.billingAgreement.cancel(
-          subscriptionId,
-          { note: "Cancelling subscription as per user request" },
-          (error, response) => {
-            if (error) {
-              reject(
-                error.response
-                  ? error.response.details
-                  : "Could not cancel subscription"
-              );
-            } else {
-              resolve(response);
-            }
+const cancelPaypalSubscription = async (subscriptionId, paypal) => {
+  return new Promise((resolve, reject) => {
+    paypal.billingAgreement.cancel(
+      subscriptionId,
+      { note: "User requested cancellation" },
+      (error, response) => {
+        if (error) {
+          console.log("Error canceling subscription:", error);
+          reject(error);
+        } else {
+          resolve({
+            error: false,
+            message: "Subscription canceled successfully",
+            response,
+          });
+        }
+      }
+    );
+  });
+};
+
+const getLatestSaleId = async (subscriptionId, paypal) => {
+  const startDate = "2020-01-01"; // Adjust date range if needed
+  const endDate = "2099-12-31";
+
+  return new Promise((resolve, reject) => {
+    paypal.billingAgreement.searchTransactions(
+      subscriptionId,
+      startDate,
+      endDate,
+      (error, response) => {
+        if (error) {
+          console.error(
+            "❌ Error retrieving transactions:",
+            error.response || error
+          );
+          reject({
+            error: true,
+            message: "Could not retrieve transactions",
+            details: error.response || error.message,
+          });
+        } else {
+          const transactions = response?.agreement_transaction_list || [];
+
+          if (transactions.length === 0) {
+            return resolve({
+              error: true,
+              message: "No transactions found for this subscription.",
+            });
           }
-        );
-      });
 
-      console.log(`Subscription ${subscriptionId} cancelled successfully.`);
+          const latestTransaction = transactions[0]; // First transaction in the list is the latest
+          resolve({
+            error: false,
+            saleId: latestTransaction.transaction_id,
+          });
+        }
+      }
+    );
+  });
+};
 
-      // Step 2: Retrieve the Subscription Transactions
-      const transactions = await new Promise((resolve, reject) => {
-        paypal.billingAgreement.searchTransactions(
-          subscriptionId,
-          "2020-01-01",
-          "2099-12-31",
-          (error, response) => {
-            if (error) {
-              reject(
-                error.response
-                  ? error.response.details
-                  : "Could not retrieve transactions"
-              );
-            } else {
-              resolve(response);
-            }
-          }
-        );
-      });
+const refundPaypalPayment = async (body, paypal) => {
+  let saleId = body.saleId;
+  let refundAmount = body.refundAmount;
+  let currency = body.currency;
 
-      if (
-        !transactions ||
-        !transactions.agreement_transaction_list ||
-        transactions.agreement_transaction_list.length === 0
-      ) {
-        return resolve({
-          error: true,
-          message: "No transactions found for this subscription.",
+  console.log("body", body);
+  const refundData = {
+    amount: {
+      total: refundAmount.toFixed(2), // Convert to 2 decimal places
+      currency: currency.toUpperCase(),
+    },
+  };
+
+  return new Promise((resolve, reject) => {
+    paypal.sale.refund(saleId, refundData, (error, refund) => {
+      if (error) {
+        console.log("Error processing refund:", error);
+        reject(error);
+      } else {
+        resolve({
+          error: false,
+          message: "Refund processed successfully",
+          response: refund,
         });
       }
-
-      // Step 3: Get the Latest Transaction ID
-      const latestTransaction = transactions.agreement_transaction_list[0];
-      const saleId = latestTransaction.transaction_id;
-
-      // Step 4: Refund the Transaction
-      const refundResponse = await new Promise((resolve, reject) => {
-        const refundRequest = {
-          amount: {
-            currency: currency.toUpperCase(),
-            total: refundAmount.toFixed(2),
-          },
-        };
-
-        paypal.sale.refund(saleId, refundRequest, (error, refund) => {
-          if (error) {
-            reject(
-              error.response
-                ? error.response.details
-                : "Could not process refund"
-            );
-          } else {
-            resolve(refund);
-          }
-        });
-      });
-
-      console.log(`Refund for sale ID ${saleId} processed successfully.`);
-
-      resolve({
-        error: false,
-        message: "Subscription cancelled and refund processed successfully",
-        response: refundResponse,
-      });
-    } catch (error) {
-      resolve({ error: true, message: error.message, response: null });
-    }
+    });
   });
 };
 
@@ -887,5 +883,7 @@ module.exports = {
   createPaymentInstallments,
   executePayment,
   billingAgreementExecute,
-  cancelSubscriptionAndRefund,
+  cancelPaypalSubscription,
+  getLatestSaleId,
+  refundPaypalPayment,
 };

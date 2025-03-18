@@ -1,4 +1,3 @@
-
 const {
   configurePaypal,
   createPaymentPlanOneTime,
@@ -7,7 +6,11 @@ const {
   createPaymentInstallments,
   executePayment,
   billingAgreementExecute,
+  cancelPaypalSubscription,
+  getLatestSaleId,
+  refundPaypalPayment,
 } = require("./src/paypal-handler");
+
 module.exports = {
   configurePaypal,
   createPaymentPlanOneTime,
@@ -16,4 +19,7 @@ module.exports = {
   createPaymentInstallments,
   executePayment,
   billingAgreementExecute,
+  getLatestSaleId,
+  refundPaypalPayment,
+  cancelPaypalSubscription,
 };
