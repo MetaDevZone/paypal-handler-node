@@ -57,6 +57,7 @@ const validateRecurringPaymentPlan = (body) => {
     tax: Joi.number().allow("", null),
     custom_days: Joi.number().allow("", null),
     cancel_url: Joi.string().allow("", null),
+    start_date: Joi.string().allow("", null),
   });
   const { error } = schema.validate(body);
   if (error) {
@@ -85,6 +86,7 @@ const validateFixedRecurringPayment = (body) => {
     tax: Joi.number().allow("", null),
     custom_days: Joi.number().allow("", null),
     cancel_url: Joi.string().allow("", null),
+    start_date: Joi.string().allow("", null),
   });
   const { error } = schema.validate(body);
   if (error) {
@@ -115,6 +117,7 @@ const validateInstallmentsPayment = (body) => {
     tax: Joi.number().allow("", null),
     custom_days: Joi.number().allow("", null),
     cancel_url: Joi.string().allow("", null),
+    start_date: Joi.string().allow("", null),
   });
   const { error } = schema.validate(body);
   if (error) {

@@ -1,6 +1,6 @@
 {
   "name": "paypal-handler",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Paypal handler",
   "main": "index.js",
   "private": false,
