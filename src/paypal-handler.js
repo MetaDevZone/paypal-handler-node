@@ -274,11 +274,16 @@ const createPaymentPlanRecurring = async (body, paypal) => {
         );
       });
 
+      let start_date = new Date(Date.now() + 60000).toISOString();
+      if (body.start_date) {
+        start_date = body.start_date;
+      }
+
       // Define the billing agreement
       const billing_agreement_attributes = {
         name: "Recurring Agreement Name",
         description: "Recurring Agreement Description",
-        start_date: new Date(Date.now() + 60000).toISOString(), // Start date of the agreement
+        start_date: start_date, // Start date of the agreement
         plan: {
           id: payment.id,
         },
@@ -458,10 +463,16 @@ const createPaymentFixedRecurring = async (body, paypal) => {
           }
         );
       });
+
+      let start_date = new Date(Date.now() + 60000).toISOString();
+      if (body.start_date) {
+        start_date = body.start_date;
+      }
+
       const billing_agreement_attributes = {
         name: "Recurring Agreement Name",
         description: "Recurring Agreement Description",
-        start_date: new Date(Date.now() + 60000).toISOString(), // Start date of the agreement (1 minute in the future)
+        start_date: start_date, // Start date of the agreement (1 minute in the future)
         plan: {
           id: payment.id,
         },
@@ -644,7 +655,10 @@ const createPaymentInstallments = async (body, paypal) => {
       // Calculate the start date for recurring payments (1 day after the initial payment)
       const now = new Date();
       const oneDayInMillis = 24 * 60 * 60 * 1000;
-      const startDate = new Date(now.getTime() + oneDayInMillis).toISOString();
+      let startDate = new Date(now.getTime() + oneDayInMillis).toISOString();
+      if (body.start_date) {
+        startDate = body.start_date;
+      }
 
       // Create the billing agreement
       const billing_agreement_attributes = {
@@ -767,6 +781,104 @@ let billingAgreementExecute = async (body, paypal) => {
     return { error: true, message: error.message, response: null };
   }
 };
+/**************************************************************************************************************/
+// Cancel the subscription
+
+const cancelSubscriptionAndRefund = async (body, paypal) => {
+  let { subscriptionId, refundAmount, currency } = body;
+  return new Promise(async (resolve) => {
+    try {
+      // Step 1: Cancel the Subscription
+      await new Promise((resolve, reject) => {
+        paypal.billingAgreement.cancel(
+          subscriptionId,
+          { note: "Cancelling subscription as per user request" },
+          (error, response) => {
+            if (error) {
+              reject(
+                error.response
+                  ? error.response.details
+                  : "Could not cancel subscription"
+              );
+            } else {
+              resolve(response);
+            }
+          }
+        );
+      });
+
+      console.log(`Subscription ${subscriptionId} cancelled successfully.`);
+
+      // Step 2: Retrieve the Subscription Transactions
+      const transactions = await new Promise((resolve, reject) => {
+        paypal.billingAgreement.searchTransactions(
+          subscriptionId,
+          "2020-01-01",
+          "2099-12-31",
+          (error, response) => {
+            if (error) {
+              reject(
+                error.response
+                  ? error.response.details
+                  : "Could not retrieve transactions"
+              );
+            } else {
+              resolve(response);
+            }
+          }
+        );
+      });
+
+      if (
+        !transactions ||
+        !transactions.agreement_transaction_list ||
+        transactions.agreement_transaction_list.length === 0
+      ) {
+        return resolve({
+          error: true,
+          message: "No transactions found for this subscription.",
+        });
+      }
+
+      // Step 3: Get the Latest Transaction ID
+      const latestTransaction = transactions.agreement_transaction_list[0];
+      const saleId = latestTransaction.transaction_id;
+
+      // Step 4: Refund the Transaction
+      const refundResponse = await new Promise((resolve, reject) => {
+        const refundRequest = {
+          amount: {
+            currency: currency.toUpperCase(),
+            total: refundAmount.toFixed(2),
+          },
+        };
+
+        paypal.sale.refund(saleId, refundRequest, (error, refund) => {
+          if (error) {
+            reject(
+              error.response
+                ? error.response.details
+                : "Could not process refund"
+            );
+          } else {
+            resolve(refund);
+          }
+        });
+      });
+
+      console.log(`Refund for sale ID ${saleId} processed successfully.`);
+
+      resolve({
+        error: false,
+        message: "Subscription cancelled and refund processed successfully",
+        response: refundResponse,
+      });
+    } catch (error) {
+      resolve({ error: true, message: error.message, response: null });
+    }
+  });
+};
+
 module.exports = {
   configurePaypal,
   createPaymentPlanOneTime,
@@ -775,4 +887,5 @@ module.exports = {
   createPaymentInstallments,
   executePayment,
   billingAgreementExecute,
+  cancelSubscriptionAndRefund,
 };
